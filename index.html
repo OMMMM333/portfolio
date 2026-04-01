@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>吳皓瑋 WU HAO-WEI | 2026 戰力預約系統</title>
+    <style>
+        :root {
+            --primary-purple: #6c5ce7;
+            --soft-purple: #a29bfe;
+            --deep-purple: #4834d4;
+            --gold: #f1c40f;
+            --white: #ffffff;
+        }
+
+        body, html { margin: 0; padding: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; overflow: hidden; background: #f0f2f5; }
+
+        /* --- 第一頁：預約介面 --- */
+        #pre-reg-view {
+            background: linear-gradient(135deg, #a29bfe 0%, #74b9ff 100%);
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 5%;
+            transition: 0.8s; position: relative; z-index: 10;
+        }
+
+        /* 背景漂浮元素 */
+        .bg-element { position: absolute; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.2); border-radius: 15px; animation: float 10s infinite linear; pointer-events: none; }
+        @keyframes float { 
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.3; } 
+            50% { transform: translateY(-50px) rotate(180deg); opacity: 0.6; }
+            100% { transform: translateY(0) rotate(360deg); opacity: 0.3; }
+        }
+
+        .main-title {
+            background: var(--white); border: 4px solid var(--primary-purple); border-radius: 50px;
+            padding: 15px 50px; color: var(--primary-purple); font-size: 2rem; font-weight: 900;
+            box-shadow: 0 8px 0 rgba(108, 92, 231, 0.2); margin-bottom: 20px;
+            animation: pulseText 3s infinite;
+        }
+        @keyframes pulseText { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+        .status-banner {
+            background: rgba(255, 255, 255, 0.85); color: #2d3436; border-radius: 30px;
+            padding: 10px 40px; margin-bottom: 50px; font-weight: bold; font-size: 1.2rem;
+        }
+
+        .milestone-container {
+            display: flex; justify-content: space-between; width: 85%; max-width: 650px;
+            position: relative; margin: 40px 0;
+        }
+        .milestone-container::after {
+            content: ''; position: absolute; top: 25px; left: 0; width: 100%; height: 4px;
+            background: rgba(255,255,255,0.5); z-index: 1;
+        }
+        .node { position: relative; z-index: 2; width: 55px; height: 55px; background: white; border: 3px solid var(--primary-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .node.checked { background: var(--primary-purple); color: white; border-color: var(--white); }
+        .node.processing { border-color: var(--primary-purple); color: var(--primary-purple); } /* 行政統籌改紫色外圈 */
+        .node-text { position: absolute; bottom: -35px; width: 120px; text-align: center; font-size: 0.85rem; font-weight: bold; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+        .char-area { text-align: center; margin-top: 20px; }
+        
+        .evolution-status { 
+            color: #fff; font-size: 1rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(108, 92, 231, 0.8); animation: blink 2s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .mage-icon { font-size: 110px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); margin-bottom: 10px; display: inline-block; animation: hoverChar 4s infinite ease-in-out; }
+        @keyframes hoverChar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        .name-tag { font-size: 2.4rem; color: white; margin: 0; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); font-weight: 900; }
+        .sub-tag { font-size: 1.1rem; color: rgba(255,255,255,0.95); margin-top: 8px; font-weight: bold; letter-spacing: 1px; }
+
+        .summon-btn {
+            background: var(--white); border: none; color: var(--primary-purple);
+            padding: 18px 70px; border-radius: 50px; font-size: 1.6rem; font-weight: 900;
+            cursor: pointer; box-shadow: 0 8px 0 var(--soft-purple); transition: 0.2s; margin-top: 45px;
+            position: relative; overflow: hidden;
+        }
+        .summon-btn::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.6), transparent);
+            transform: rotate(45deg); animation: shine 3s infinite;
+        }
+        @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
+        .summon-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--soft-purple); }
+
+        /* --- 第二頁：進化系統 --- */
+        #rpg-view {
+            display: none; position: fixed; inset: 0; z-index: 999;
+            background: #1a1a2e; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        #particles { position: absolute; inset: 0; pointer-events: none; }
+
+        .game-panel {
+            position: relative; z-index: 2;
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 40px;
+            padding: 40px; width: 90%; max-width: 1000px; display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; color: white;
+        }
+
+        .avatar-area { text-align: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 30px; }
+        .shadow-frame {
+            width: 170px; height: 170px; border-radius: 50%; border: 4px solid var(--soft-purple);
+            margin: 0 auto 20px; background: #000; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; font-size: 80px; color: white; font-weight: 100; box-shadow: 0 0 20px rgba(108, 92, 231, 0.3);
+        }
+
+        .menu-btn { 
+            width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; padding: 15px; border-radius: 12px; cursor: pointer; margin-top: 12px;
+            font-weight: bold; transition: 0.3s; text-align: center;
+        }
+        .menu-btn:hover { background: var(--primary-purple); transform: translateX(5px); }
+
+        .social-icons { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .social-link { width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        
+        .dialog-box { background: rgba(0,0,0,0.4); padding: 25px; border-radius: 20px; min-height: 160px; border-left: 6px solid var(--primary-purple); font-size: 1.05rem; line-height: 1.7; }
+        
+        .bar-container { background: rgba(0,0,0,0.6); height: 26px; border-radius: 13px; margin: 25px 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        #bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #6c5ce7, #00d2d3, #f1c40f); transition: 1s cubic-bezier(0.19, 1, 0.22, 1); }
+
+        #inject-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+        #cta-link { 
+            display: none; margin-top: 25px; background: var(--gold); color: #000; padding: 18px; 
+            border-radius: 15px; text-align: center; font-weight: 900; text-decoration: none; 
+            font-size: 1.2rem; box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);
+        }
+
+        .port-item { display: block; background: rgba(255,255,255,0.1); padding: 12px; margin: 10px 0; border-radius: 8px; color: white; text-decoration: none; border: 1px solid var(--soft-purple); text-align: center; font-size: 0.9rem; }
+        .port-item:hover { background: var(--primary-purple); }
+    </style>
+</head>
+<body>
+
+    <div id="pre-reg-view">
+        <div class="bg-element" style="width:100px; height:100px; top:10%; left:5%;"></div>
+        <div class="bg-element" style="width:60px; height:60px; bottom:20%; right:10%; animation-delay: -2s;"></div>
+        <div class="bg-element" style="width:40px; height:40px; top:40%; right:15%; animation-delay: -5s;"></div>
+
+        <div class="main-title">現在就成為夥伴的一員吧！</div>
+        <div class="status-banner">🏆 戰力預約人數：20260401 名</div>
+
+        <div class="milestone-container">
+            <div class="node checked">✓<div class="node-text">職人穩定產出</div></div>
+            <div class="node checked">✓<div class="node-text">數位轉譯感官</div></div>
+            <div class="node processing">🔒<div class="node-text">行政統籌戰力</div></div>
+        </div>
+
+        <div class="char-area">
+            <div class="evolution-status">當前狀態： 職人素質轉化中 (Evolution Processing...)</div>
+            <div class="mage-icon">🧙‍♂️</div>
+            <h1 class="name-tag">吳皓瑋 (WU HAO-WEI)</h1>
+            <div class="sub-tag">全能型執行助手 | 隨時準備進化</div>
+            <button class="summon-btn" onclick="showRPG()">立即預約進化</button>
+        </div>
+    </div>
+
+    <div id="rpg-view">
+        <canvas id="particles"></canvas>
+        <div class="game-panel">
+            <div class="avatar-area">
+                <div style="background:var(--gold); color:black; padding:3px 12px; border-radius:5px; font-weight:bold; font-size:0.8rem; display:inline-block; margin-bottom:15px;">STATUS: 全能進化態</div>
+                <div class="shadow-frame" id="hero-img">?</div>
+                <h2 style="font-size: 2rem; margin: 10px 0; letter-spacing: 2px;">WU HAO WEI</h2>
+                
+                <div class="menu-list">
+                    <button class="menu-btn" onclick="showInfo('skill')">▶ 技能庫 (Skills)</button>
+                    <button class="menu-btn" onclick="showInfo('stat')">▶ 能力值 (Stats)</button>
+                    <button class="menu-btn" onclick="showInfo('work')">▶ 戰績表 (Works)</button>
+                </div>
+
+                <div class="social-icons">
+                    <a href="https://pda.104.com.tw/profile/share/6ShsnCAUYwUAOBEXhUGtMhrxwiulrwPE" class="social-link" target="_blank"><img src="https://www.104.com.tw/favicon.ico" width="24"></a>
+                    <a href="https://www.instagram.com/howay4real/" class="social-link" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" width="24"></a>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div class="dialog-box" id="msg">
+                    <strong>系統提示：</strong><br>「偵測到目標 JD 匹配！吳皓瑋已將工藝匠心與社群感官同步。請注入關鍵能量解鎖最終實戰型態。」
+                </div>
+
+                <div class="bar-container"><div id="bar-fill"></div></div>
+
+                <div id="inject-btns">
+                    <button class="menu-btn" style="background:rgba(108, 92, 231, 0.3); margin-top:0;" onclick="addEnergy(34, '解鎖：數位感官與社群嗅覺！具備多媒體轉譯與視覺溝通能力。')">注入：社群視覺</button>
+                    <button class="menu-btn" style="background:rgba(0, 210, 211, 0.3); margin-top:0;" onclick="addEnergy(33, '解鎖：環境適應與持續進化能力！100% 準確度製程基因啟動。')">注入：迭代學習</button>
+                    <button class="menu-btn" style="background:rgba(241, 196, 15, 0.3); margin-top:0;" onclick="addEnergy(33, '解鎖：理性自律與高壓防線！具備交易員級別的冷靜決策素質。')">注入：理性自律</button>
+                </div>
+
+                <a href="https://pda.104.com.tw/profile/share/6ShsnCAUYwUAOBEXhUGtMhrxwiulrwPE" id="cta-link" target="_blank">✉ 傳送召募密碼 (104 通知我)</a>
+            </div>
+        </div>
+        <button onclick="location.reload()" style="margin-top:25px; color:#aaa; background:none; border:none; cursor:pointer; text-decoration:underline; z-index:10;">◀ 返回預約頁面 (Reset Status)</button>
+    </div>
+
+    <script>
+        let power = 0;
+        function showRPG() {
+            document.getElementById('pre-reg-view').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('pre-reg-view').style.display = 'none';
+                document.getElementById('rpg-view').style.display = 'flex';
+                startParticles();
+            }, 600);
+        }
+
+        function addEnergy(val, text) {
+            power = Math.min(100, power + val);
+            document.getElementById('bar-fill').style.width = power + '%';
+            document.getElementById('msg').innerHTML = `<strong>同步更新：</strong><br>${text}<br>目前進化進度：${power}%`;
+            
+            if(power >= 100) {
+                document.getElementById('msg').innerHTML = "<strong>🏆 滿額預約解鎖：</strong><br>「吳皓瑋已進入職場實戰型態。具備高良率自律、數位轉譯與行政邏輯之全能特質，隨時準備投入專案支援！」";
+                document.getElementById('cta-link').style.display = 'block';
+                document.getElementById('inject-btns').style.pointerEvents = 'none';
+                document.getElementById('inject-btns').style.opacity = '0.3';
+                document.getElementById('hero-img').innerHTML = '🏆';
+                document.getElementById('hero-img').style.fontSize = '60px';
+                document.getElementById('hero-img').style.background = 'var(--primary-purple)';
+            }
+        }
+
+        function showInfo(type) {
+            const msg = document.getElementById('msg');
+            const info = {
+                skill: "<strong>🔥 核心技能：</strong><br>• IG 圖文製作，內容發表<br>• Reels 短影音企劃與後製<br>• 精密製程管理 (100% 良率 & 高度自律)<br>• 跨部門行政統籌與邏輯文件輸出<br>• 金融/外匯資訊轉譯與市場分析助理",
+                stat: "<strong>📊 能力值：</strong><br>• 穩定產出：S (3年焊工與 Garmin 紀律)<br>• 轉譯美感：A+ (Reels 高點擊實績)<br>• 學習韌性：EX (快速掌握 AI 與新工具)<br>• 壓力耐性：S (FTMO 交易員心理素質)",
+                work: `<strong>📂 戰績表 (Works)：</strong><br>
+                    <a href="https://www.notion.so/ROG-Phone-8-335edab9ddc280e58a8bdf2f03acf2eb?v=125e4b26451a44df9c8cdf70939e8596" class="port-item" target="_blank">🖼️ 圖片戰績：手機&3C (展示部分)</a>
+                    <a href="https://www.notion.so/335edab9ddc28047bc8ec5ba6563440a?v=125e4b26451a44df9c8cdf70939e8596" class="port-item" target="_blank">🖼️ 圖片戰績：外匯金融 (展示部分)</a>
+                    <a href="https://www.notion.so/reels-335edab9ddc280ada645ee11ab2fbb2b?v=125e4b26451a44df9c8cdf70939e8596" class="port-item" target="_blank">🎬 Reels 影片：動態演算法</a>`
+            };
+            msg.innerHTML = info[type];
+        }
+
+        function startParticles() {
+            const canvas = document.getElementById('particles');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            let pArr = Array.from({length: 100}, () => ({
+                x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+                s: Math.random()*5 + 3, r: Math.random()*2.5 + 1
+            }));
+            function animate() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                pArr.forEach(p => {
+                    p.y -= p.s; if(p.y < 0) p.y = canvas.height;
+                    ctx.fillStyle = "rgba(162, 155, 254, 0.8)";
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
